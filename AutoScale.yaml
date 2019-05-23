@@ -1,0 +1,187 @@
+Mappings: 
+  RegionMap: 
+    us-east-1: 
+      "HVM64": "ami-0756fbca465a59a30"
+    us-east-2:
+      "HVM64": "ami-04768381bf606e2b3"
+    us-west-1: 
+      "HVM64": "ami-063dd30adbb186909"
+    eu-west-2: 
+      "HVM64": "ami-07a0c6e669965bb7c"
+    ap-south-1:
+      "HVM64": "ami-0eacc5b7915ba9921"
+    ap-northeast-2:
+      "HVM64": "ami-082b5ca9ff663f3b8"
+    ap-southeast-1: 
+      "HVM64": "ami-03097abf0db1cdff2"
+    ap-southeast-2:
+      "HVM64": "ami-05067171f4230ac41"
+    ap-northeast-1: 
+      "HVM64": "ami-0ccdbc8c1cb7957be"
+    ca-central-1:
+      "HVM64": "ami-07ab3281411d31d04"
+    eu-central-1:
+      "HVM64": "ami-03a71cec707bfc3d7"
+    eu-west-1:
+      "HVM64": "ami-03c242f4af81b2365"
+    eu-west-2:
+      "HVM64": "ami-05663d374a152d239"
+    eu-west-3:
+      "HVM64": "ami-0f962299dc4d90c81"
+    eu-north-1:
+      "HVM64": "ami-be4bc3c0"
+    sa-east-1:
+      "HVM64": "ami-0eb2a191bf5e40e10" 
+
+Resources:
+
+  PublicLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: PublicLoadBalancer
+      Subnets: 
+        - !ImportValue alamstack-PublicSubnet1
+        - !ImportValue alamstack-PublicSubnet2
+      SecurityGroups:
+        - !ImportValue alamstack-PublicLoadBalancerSG
+      Scheme: internet-facing
+      Tags:
+        - Key: Name
+          Value: PublicLB
+
+  PublicLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref PublicLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref DefaultTargetGroup
+
+  DefaultTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: alamtargetgroup-default
+      VpcId: !ImportValue alamstack-VPC
+      Port: 80
+      Protocol: HTTP
+      # Targets:
+      #   - Id: !ImportValue alamstack-Webserver
+      Tags:
+        - Key: Name
+          Value: TargetGroup
+
+  PrivateLoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Listeners:
+        - InstancePort: 22
+          LoadBalancerPort: 22
+          Protocol: TCP
+        - InstancePort: 3306
+          LoadBalancerPort: 3306
+          Protocol: TCP
+      Scheme: Internal
+      HealthCheck:
+        HealthyThreshold : 3
+        Interval : 30
+        Target : TCP:3306
+        Timeout : 5
+        UnhealthyThreshold : 5
+      SecurityGroups:
+        - !ImportValue alamstack-ApplicationServerSecurityGroup
+      Instances: 
+        - !ImportValue alamstack-AppServer
+      Subnets:
+        - !ImportValue alamstack-PrivateSubnet1
+      Tags:
+        - Key: Name
+          Value: PrivateLB
+
+
+
+  LaunchConfigurationPublic:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
+      LaunchConfigurationName: alamcf-lcfgPb
+      # KeyName: 
+      #   !ImportValue alamstack-KeyName
+      SecurityGroups:
+        - !ImportValue alamstack-InstanceSecurityGroup
+      InstanceType:
+        !ImportValue alamstack-InstanceType
+      UserData:
+        Fn::Base64: !Sub 
+        - |
+          #!/bin/bash
+          set -ex
+          sleep 3m
+          yum install deltarpm -y
+          yum update -y
+          yum upgrade -y
+          yum install php-mysql mysql-sever httpd php -y
+          service httpd start
+          cd /var/www/
+          rm -rf html
+          wget https://s3.amazonaws.com/alamhtml/html.zip
+          unzip html.zip
+          rm -rf html.zip
+          sed -i -e 's/localhost/${AppPrivateIp}/g' /var/www/html/config.php
+        - AppPrivateIp:
+            !ImportValue alamstack-AppServerPrivateIp
+
+  LaunchConfigurationPrivate:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      InstanceId: !ImportValue alamstack-AppServer
+
+
+
+  AutoScalingGroupPublic:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName:
+        Ref: LaunchConfigurationPublic
+      MinSize: 2
+      MaxSize: 4
+      VPCZoneIdentifier:
+        - !ImportValue alamstack-PublicSubnet1
+        - !ImportValue alamstack-PublicSubnet2
+      TargetGroupARNs: 
+        - !Ref DefaultTargetGroup
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value: WebServer
+
+  AutoScalingGroupPrivate:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref LaunchConfigurationPrivate
+      MinSize: 0
+      MaxSize: 1
+      VPCZoneIdentifier:
+        - !ImportValue alamstack-PrivateSubnet1
+      LoadBalancerNames:
+        - Ref: PrivateLoadBalancer
+      Tags:
+      - Key: Name
+        PropagateAtLaunch: true
+        Value: ApplicationServerAutoScaled
+
+
+# Outputs:
+
+  # LoadBalancer:
+  #   Description: A reference to the Application Load Balancer
+  #   Value: !Ref LoadBalancer
+
+  # LoadBalancerUrl:
+  #   Description: The URL of the ALB
+  #   Value: !GetAtt LoadBalancer.DNSName
+
+  # Listener:
+  #   Description: A reference to a port 80 listener
+  #   Value: !Ref PublicLoadBalancerListene
