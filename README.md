@@ -31,6 +31,6 @@ This is the last stack. It depends on the 'Instances' stack. It contains the fol
 
 Two web servers will be launched in the public subnets in different availability zones. The web servers will be only accessible through the Application load balancer. 
 
-![alt text](App1.png)
-![alt text](App2.png)
+## Application Snapshot:
+
 ![alt text](App3.png)
