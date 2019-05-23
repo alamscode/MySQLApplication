@@ -330,50 +330,6 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable2
       SubnetId: !Ref PrivateSubnet2
 
-  # RdsSecurityGroup:
-  #   Type: AWS::EC2::SecurityGroup
-  #   Properties:
-  #     GroupDescription: App Server to RDS access
-  #     VpcId: !Ref VPC
-  #     Tags: 
-  #       - Key: Name
-  #         Value: !Ref BaseName
-  #     SecurityGroupIngress:
-  #       - IpProtocol: tcp
-  #         FromPort: !Ref TcpPort
-  #         ToPort: !Ref TcpPort
-  #         CidrIp: !Ref PrivateSubnet1CIDR
-
-  #       - IpProtocol: tcp
-  #         FromPort: 3306
-  #         ToPort: 3306
-  #         CidrIp: !Ref PrivateSubnet1CIDR
-
-  # AccessSecurityGroupIngress:
-  #   Type: AWS::EC2::SecurityGroupIngress
-  #   DependsOn: RdsSecurityGroup
-  #   Properties:
-  #     GroupId: !Ref RdsSecurityGroup
-  #     IpProtocol: tcp
-  #     FromPort: !Ref TcpPort
-  #     ToPort: !Ref TcpPort
-  #     SourceSecurityGroupId: !Ref RdsSecurityGroup
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Ref BaseName
-
-  # DbSubnetGroup:
-  #   Type: AWS::RDS::DBSubnetGroup
-  #   Properties:
-  #     DBSubnetGroupDescription: 'Database Subnet Group'
-  #     SubnetIds:
-  #     - !Ref PrivateSubnet1
-  #     - !Ref PrivateSubnet2
-  #     Tags:
-  #       - Key: Name
-  #         Value: !Ref BaseName
-
-
 Outputs:
   VPC:
     Description: A reference to the created VPC
@@ -412,10 +368,6 @@ Outputs:
     Description: A reference to the private subnet in the 2nd Availability Zone
     Value: !Ref PrivateSubnet2
 
-
-
-
-
   ApplicationServerSecurityGroup:
     Description: Private Security Group
     Value: !Ref ApplicationServerSecurityGroup
@@ -428,7 +380,6 @@ Outputs:
     Export:
       Name: !Sub "alamstack-InstanceSecurityGroup"
 
-
   InternetGateway:
     Description: Internet Gateway
     Value: !Ref InternetGateway
@@ -436,7 +387,6 @@ Outputs:
   InternetGatewayAttachment:
     Description: Internet Gateway Attachment 
     Value: !Ref InternetGatewayAttachment
-
 
   NatGateway1EIP:
     Description: NatGateway 1 EIP
@@ -470,10 +420,6 @@ Outputs:
     Description: Public Subnet 2 Route Table Association
     Value: !Ref PublicSubnet2RouteTableAssociation
 
-  # PublicSubnet3RouteTableAssociation:
-  #   Description: Public Subnet 3 Route Table Association
-  #   Value: !Ref PublicSubnet3RouteTableAssociation
-
   PrivateRouteTable1:
     Description: Private Route Table 1
     Value: !Ref PrivateRouteTable1
@@ -497,22 +443,6 @@ Outputs:
   PrivateSubnet2RouteTableAssociation:
     Description: Private Subnet 2 Route Table Association
     Value: !Ref PrivateSubnet2RouteTableAssociation
-
-  # RdsSecurityGroup:
-  #   Description: Rds Security Group 
-  #   Value: !Ref RdsSecurityGroup
-  #   Export:
-  #     Name: !Sub "alamstack-RdsSecurityGroup"
-
-  # AccessSecurityGroupIngress:
-  #   Description: Access Security Group Ingress 
-  #   Value: !Ref AccessSecurityGroupIngress
-
-  # DbSubnetGroup:
-  #   Description: Database Subnet Group 
-  #   Value: !Ref DbSubnetGroup
-  #   Export:
-  #     Name: !Sub "alamstack-DbSubnetGroup"
 
   PublicLoadBalancerSG:
     Value: !Ref PublicLoadBalancerSG
