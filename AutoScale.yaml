@@ -66,8 +66,6 @@ Resources:
       VpcId: !ImportValue alamstack-VPC
       Port: 80
       Protocol: HTTP
-      # Targets:
-      #   - Id: !ImportValue alamstack-Webserver
       Tags:
         - Key: Name
           Value: TargetGroup
@@ -106,8 +104,6 @@ Resources:
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
       LaunchConfigurationName: alamcf-lcfgPb
-      # KeyName: 
-      #   !ImportValue alamstack-KeyName
       SecurityGroups:
         - !ImportValue alamstack-InstanceSecurityGroup
       InstanceType:
@@ -170,18 +166,3 @@ Resources:
       - Key: Name
         PropagateAtLaunch: true
         Value: ApplicationServerAutoScaled
-
-
-# Outputs:
-
-  # LoadBalancer:
-  #   Description: A reference to the Application Load Balancer
-  #   Value: !Ref LoadBalancer
-
-  # LoadBalancerUrl:
-  #   Description: The URL of the ALB
-  #   Value: !GetAtt LoadBalancer.DNSName
-
-  # Listener:
-  #   Description: A reference to a port 80 listener
-  #   Value: !Ref PublicLoadBalancerListene
