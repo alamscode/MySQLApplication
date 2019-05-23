@@ -1,6 +1,6 @@
 ![alt text](MySQLApp.jpg)
 # A Simple MySQL Application
-> An pplication that performs basic Create and Read operations. Using the AWS platform, the whole infrastructure instructions are written in YAML format in the form of nested stacks. Properly parameterized and mapped, all the stacks can be run in any Region on the AWS platform for the purpose of testing and further development.
+> An application that performs basic Create and Read operations. Using the AWS platform, the whole infrastructure instructions are written in YAML format in the form of nested stacks. Properly parameterized and mapped, all the stacks can be run in any Region on the AWS platform for the purpose of testing and further development.
 
 ## Prerequisites
 ```
@@ -30,3 +30,7 @@ This is the last stack. It depends on the 'Instances' stack. It contains the fol
 - AutoScaling groups for Web Server and Application Server
 
 Two web servers will be launched in the public subnets in different availability zones. The web servers will be only accessible through the Application load balancer. 
+
+![alt text](App1.png)
+![alt text](App2.png)
+![alt text](App3.png)
