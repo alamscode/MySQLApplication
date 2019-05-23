@@ -1,11 +1,5 @@
 
 Parameters:
-
-  # KeyName:
-  #   Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
-  #   Type: AWS::EC2::KeyPair::KeyName
-  #   ConstraintDescription: must be the name of an existing EC2 KeyPair.
-  #   Default: alam-keypair-N.V
   
   InstanceType:
     Description: Webserver EC2 instance type
@@ -67,80 +61,6 @@ Parameters:
       - cc2.8xlarge
       - cg1.4xlarge
 
-  # MasterUsername:
-  #   Description: Database administration name. First character must be a letter and
-  #     can not be 'root'.
-  #   Type: String
-  #   Default: rdsroot
-  
-  
-  # BackupRetentionPeriod:
-  #   Description: Enter Backup Retention Period in Days.
-  #   Type: Number
-  #   Default: 7
-  
-  # MultiAvailabilityZone:
-  #   Description: Enable Multi Availability Zones?
-  #   Type: String
-  #   Default: false
-  #   AllowedValues:
-  #     - true
-  #     - false
-
-  # AllocatedStorage:
-  #   Default: '5'
-  #   Description: The size of the database (Gb)
-  #   Type: Number
-  #   MinValue: '5'
-  #   MaxValue: '6144'
-  #   ConstraintDescription: Must be between 5-6144
-
-  # SnapshotOnDelete:
-  #   Description: Create a Snapshot on Delete?
-  #   Type: String
-  #   Default: false
-  #   AllowedValues:
-  #     - true
-  #     - false
-  
-  # DbInstanceType:
-  #   Description: Select Instance Type.
-  #   Type: String
-  #   Default: db.t2.small
-  #   AllowedValues:
-  #     - db.t1.micro
-  #     - db.t2.micro
-  #     - db.t2.small
-  #     - db.t2.medium
-  #     - db.t2.large
-  #     - db.m1.small
-  #     - db.m1.medium
-  #     - db.m1.large
-  #     - db.m1.xlarge
-  #     - db.m3.medium
-  #     - db.m3.large
-  #     - db.m3.xlarge
-  #     - db.m3.2xlarge
-  #     - db.m4.large
-  #     - db.m4.xlarge
-  #     - db.m4.2xlarge
-  #     - db.m4.4xlarge
-  #     - db.m4.10xlarge
-  #     - db.r3.large
-  #     - db.r3.xlarge
-  #     - db.r3.2xlarge
-  #     - db.r3.4xlarge
-  #     - db.r3.8xlarge
-  #   ConstraintDescription: Must be a valid EC2 instance type
-
-
-# Conditions:
-#   ConfigureSnapshotOnDelete:
-#     Fn::Equals:
-#     - Ref: SnapshotOnDelete
-#     - 'true'
-
-
 Mappings:
   Settings:
     MySQL:
@@ -183,72 +103,6 @@ Mappings:
 
 
 Resources:
-
-  # Webserver:
-  #   Type: AWS::EC2::Instance
-  #   Metadata:
-  #     Comment1: Configure the bootstrap helpers to install the Apache Web Server and
-  #       PHP
-  #     Comment2: Save website content to /var/www/html/index.php
-  #     AWS::CloudFormation::Init:
-  #       configSets:
-  #         Install:
-  #         - Install
-  #       Install:
-  #         packages:
-  #           yum:
-  #             php-mysql: []
-  #             mysql-server: []
-  #             httpd: []
-  #             php: []
-  #   Properties:
-  #     InstanceType:
-  #       !Ref InstanceType
-  #     SecurityGroupIds: 
-  #       - !ImportValue alamstack-InstanceSecurityGroup
-  #     KeyName:
-  #       !Ref KeyName
-  #     ImageId: ami-0080e4c5bc078760e
-  #     SubnetId: 
-  #       Fn::ImportValue: alamstack-PublicSubnet1
-  #     UserData:
-  #       Fn::Base64: !Sub |
-  #         #!/bin/bash
-  #         set -ex
-  #         sleep 3m
-  #         yum install deltarpm -y
-  #         yum update -y
-  #         yum upgrade -y
-  #         yum install -y aws-cfn-bootstrap
-  #         /opt/aws/bin/cfn-init -v -s ${AWS::StackName} -r Webserver -c Install --region ${AWS::Region}
-  #         service httpd start
-  #         cd /var/www/
-  #         rm -rf html
-  #         wget https://s3.amazonaws.com/alamhtml/html.zip
-  #         unzip html.zip
-  #         rm -rf html.zip
-  #         sed -i -e 's/localhost/${AppServer.PrivateIp}/g' /var/www/html/config.php
-  #     Tags:
-  #       - Key: Name
-  #         Value: alamweb
-
-
-
-
-
-  # WebServer2:
-  #   Type: AWS::EC2::Instance
-  #   Properties:
-  #     InstanceType:
-  #       !Ref InstanceType
-  #     SecurityGroupIds:
-  #     - !GetAtt "InstanceSecurityGroup.GroupId"
-  #     KeyName:
-  #       !Ref KeyName
-  #     ImageId: ami-0080e4c5bc078760e
-  #     SubnetId: !Ref PublicSubnet2
-
-
   AppServer:
     Type: AWS::EC2::Instance
     Properties:
@@ -256,8 +110,6 @@ Resources:
         !Ref InstanceType
       SecurityGroupIds:
         - !ImportValue alamstack-ApplicationServerSecurityGroup
-      # KeyName:
-      #   !Ref KeyName
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
       SubnetId:
         Fn::ImportValue: alamstack-PrivateSubnet1
@@ -296,55 +148,12 @@ Resources:
         - Key: Name
           Value: ApplicationServer
 
-
-
-  # DbInstance:
-  #   Type: AWS::RDS::DBInstance
-  #   DeletionPolicy: Snapshot
-  #   DependsOn: 
-  #     - DbSubnetGroup
-  #     - RdsSecurityGroup
-  #   Properties:
-  #     AllocatedStorage: !Ref AllocatedStorage
-  #     BackupRetentionPeriod: !Ref BackupRetentionPeriod
-  #     DBInstanceClass: !Ref DbInstanceType
-  #     DBSubnetGroupName: !Ref DbSubnetGroup
-  #     Engine:
-  #       Fn::FindInMap:
-  #       - Settings
-  #       - MySQL
-  #       - Engine
-  #     EngineVersion:
-  #       Fn::FindInMap:
-  #       - Settings
-  #       - MySQL
-  #       - Version
-  #     MasterUsername: !Ref MasterUsername
-  #     MasterUserPassword: !Ref MasterUserPassword
-  #     Port: !Ref TcpPort
-  #     StorageType: gp2
-  #     VPCSecurityGroups: 
-  #       - !Ref RdsSecurityGroup
-  #     Tags:
-  #       - Key: Name
-  #         Value: DbInstance
-
-
 Outputs:
-  # Webserver:
-  #   Value: !Ref Webserver
-  #   Export:
-  #     Name: !Sub "alamstack-Webserver"
 
   AppServer:
     Value: !Ref AppServer
     Export:
       Name: !Sub "alamstack-AppServer"
-
-  # KeyName:
-  #   Value: !Ref KeyName
-  #   Export:
-  #     Name: !Sub "alamstack-KeyName"
 
   AppServerPrivateIp:
     Description: My Private Instance's Private IP Referred.
