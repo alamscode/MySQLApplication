@@ -129,8 +129,8 @@ Resources:
           service mysqld start
           mysqladmin -u root password test
           mysqladmin -u root -ptest flush-privileges
-          mysql -u root -ptest -e "CREATE USER 'alam'@'%' IDENTIFIED BY 'test';"
-          mysql -u root -ptest -e "GRANT ALL PRIVILEGES ON * . * TO 'alam'@'%' IDENTIFIED BY 'test';"
+          mysql -u root -ptest -e "CREATE USER 'alam'@'%' IDENTIFIED BY '03325181228';"
+          mysql -u root -ptest -e "GRANT ALL PRIVILEGES ON * . * TO 'alam'@'%' IDENTIFIED BY '03325181228';"
           mysql -u root -ptest -e "FLUSH PRIVILEGES;"
           mysql -u root -ptest -e "CREATE DATABASE crud;"
           mysql -u root -ptest << EOF 
